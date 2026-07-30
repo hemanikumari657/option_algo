@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% block title %}Advanced Trading Terminal — AlgoBot{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/terminal.css"/>
+{% endblock %}
+{% block content %}
+
+<div id="terminal-loading" style="display:flex;align-items:center;justify-content:center;height:calc(100vh - 56px);background:#060b18;color:#64748b;font-size:14px">
+  Loading Advanced Trading Terminal...
+</div>
+
+<div id="terminal-app" class="terminal-layout" style="display:none">
+
+  <!-- LEFT PANEL -->
+  <div class="terminal-left">
+    <!-- Watchlist -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-card-title">Watchlist</span>
+        <button class="term-btn-icon" id="wl-refresh" title="Refresh">↻</button>
+      </div>
+      <div class="term-watchlist" id="watchlist">
+        <div class="wl-item wl-active" data-symbol="NIFTY">
+          <span class="wl-sym">NIFTY</span>
+          <span class="wl-ltp" id="wl-nifty-ltp">—</span>
+          <span class="wl-change" id="wl-nifty-chg">—</span>
+        </div>
+        <div class="wl-item" data-symbol="BANKNIFTY">
+          <span class="wl-sym">BANKNIFTY</span>
+          <span class="wl-ltp" id="wl-banknifty-ltp">—</span>
+          <span class="wl-change" id="wl-banknifty-chg">—</span>
+        </div>
+        <div class="wl-item" data-symbol="SENSEX">
+          <span class="wl-sym">SENSEX</span>
+          <span class="wl-ltp" id="wl-sensex-ltp">—</span>
+          <span class="wl-change" id="wl-sensex-chg">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATM Strike Info -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-card-title">ATM Strikes</span>
+        <span class="term-badge" id="atm-spot-badge">Spot: —</span>
+      </div>
+      <div class="atm-grid">
+        <div class="atm-row">
+          <span class="atm-label">ATM CE</span>
+          <span class="atm-val" id="atm-ce">—</span>
+          <span class="atm-premium" id="atm-ce-premium">—</span>
+        </div>
+        <div class="atm-row">
+          <span class="atm-label">ATM PE</span>
+          <span class="atm-val" id="atm-pe">—</span>
+          <span class="atm-premium" id="atm-pe-premium">—</span>
+        </div>
+        <div class="atm-row atm-itm">
+          <span class="atm-label">ITM CE (1)</span>
+          <span class="atm-val" id="itm-ce">—</span>
+          <span class="atm-premium" id="itm-ce-premium">—</span>
+        </div>
+        <div class="atm-row atm-itm">
+          <span class="atm-label">ITM PE (1)</span>
+          <span class="atm-val" id="itm-pe">—</span>
+          <span class="atm-premium" id="itm-pe-premium">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Strategy Status -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-card-title">Strategy</span>
+        <span class="term-status-dot" id="strategy-status-dot">●</span>
+      </div>
+      <div class="strategy-badge-wrap" id="strategy-badge-wrap">
+        <span class="strategy-badge" id="active-strategy-badge">No Active Strategy</span>
+      </div>
+      <div class="strategy-detail">
+        <div class="sd-row">
+          <span class="sd-label">Signal Type</span>
+          <span class="sd-val" id="sd-signal-type">—</span>
+        </div>
+        <div class="sd-row">
+          <span class="sd-label">Entry Price</span>
+          <span class="sd-val" id="sd-entry-price">—</span>
+        </div>
+        <div class="sd-row">
+          <span class="sd-label">Signal Time</span>
+          <span class="sd-val" id="sd-signal-time">—</span>
+        </div>
+        <div class="sd-row">
+          <span class="sd-label">Confidence</span>
+          <span class="sd-val" id="sd-confidence">—</span>
+        </div>
+        <div class="sd-row">
+          <span class="sd-label">Reason</span>
+          <span class="sd-val" id="sd-reason">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trade Status -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-card-title">Trade Status</span>
+      </div>
+      <div class="trade-status-grid">
+        <div class="ts-row">
+          <span class="ts-label">Mode</span>
+          <span class="ts-val" id="ts-mode">—</span>
+        </div>
+        <div class="ts-row">
+          <span class="ts-label">Status</span>
+          <span class="ts-val" id="ts-status">No Position</span>
+        </div>
+        <div class="ts-row">
+          <span class="ts-label">Direction</span>
+          <span class="ts-val" id="ts-direction">—</span>
+        </div>
+        <div class="ts-row">
+          <span class="ts-label">Quantity</span>
+          <span class="ts-val" id="ts-quantity">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER PANEL -->
+  <div class="terminal-center">
+    <!-- Toolbar -->
+    <div class="chart-toolbar">
+      <div class="toolbar-left">
+        <span class="toolbar-symbol" id="chart-symbol">NIFTY</span>
+        <span class="toolbar-expiry" id="chart-expiry">—</span>
+        <div class="toolbar-separator"></div>
+        <div class="tf-buttons" id="timeframe-buttons">
+          <button class="tf-btn active" data-tf="1m">1m</button>
+          <button class="tf-btn" data-tf="3m">3m</button>
+          <button class="tf-btn" data-tf="5m">5m</button>
+          <button class="tf-btn" data-tf="15m">15m</button>
+          <button class="tf-btn" data-tf="30m">30m</button>
+          <button class="tf-btn" data-tf="1h">1H</button>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="tf-btn" id="btn-indicators" title="Indicators">📊</button>
+        <button class="tf-btn" id="btn-reset-chart" title="Reset Chart">⟲</button>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-container" id="chart-container">
+      <div id="tv-chart"></div>
+      <!-- Floating PnL Overlay -->
+      <div class="pnl-float" id="pnl-float">+₹0.00</div>
+      <!-- Position Overlay Info -->
+      <div class="pos-overlay" id="pos-overlay" style="display:none">
+        <div class="pos-overlay-row">
+          <span class="po-label">Entry</span>
+          <span class="po-val" id="po-entry">—</span>
+        </div>
+        <div class="pos-overlay-row">
+          <span class="po-label">Qty</span>
+          <span class="po-val" id="po-qty">—</span>
+        </div>
+        <div class="pos-overlay-row">
+          <span class="po-label">SL</span>
+          <span class="po-val po-sl" id="po-sl">—</span>
+        </div>
+        <div class="pos-overlay-row">
+          <span class="po-label">Target</span>
+          <span class="po-val po-target" id="po-target">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="terminal-right">
+    <!-- Position Details -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-card-title">Position Details</span>
+        <span class="term-badge" id="pos-mode-badge-terminal">—</span>
+      </div>
+      <div class="pos-detail-grid" id="pos-detail-grid">
+        <div class="pd-row">
+          <span class="pd-label">Quantity</span>
+          <span class="pd-val" id="pd-qty">—</span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-label">Entry Price</span>
+          <span class="pd-val" id="pd-entry">—</span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-label">Current Price</span>
+          <span class="pd-val" id="pd-curr">—</span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-label">P&L</span>
+          <span class="pd-val pd-pnl" id="pd-pnl">₹0.00</span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-label">ROI</span>
+          <span class="pd-val" id="pd-roi">0.00%</span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-label">Holding Time</span>
+          <span class="pd-val" id="pd-holding">—</span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-label">Strategy</span>
+          <span class="pd-val" id="pd-strategy">—</span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-label">Mode</span>
+          <span class="pd-val" id="pd-exec-mode">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SL / Target Management -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-card-title">SL & Target</span>
+      </div>
+      <div class="sl-tp-grid">
+        <div class="sl-tp-block">
+          <label class="st-label">Stop Loss</label>
+          <div class="st-value-row">
+            <span class="st-price" id="st-sl-price">—</span>
+            <span class="st-points" id="st-sl-points">—</span>
+          </div>
+          <div class="st-drag-hint">⇅ Drag on chart to modify</div>
+        </div>
+        <div class="sl-tp-block">
+          <label class="st-label">Target</label>
+          <div class="st-value-row">
+            <span class="st-price" id="st-tp-price">—</span>
+            <span class="st-points" id="st-tp-points">—</span>
+          </div>
+          <div class="st-drag-hint">⇅ Drag on chart to modify</div>
+        </div>
+      </div>
+      <div class="rr-row">
+        <span class="rr-label">Risk:Reward</span>
+        <span class="rr-val" id="st-rr">—</span>
+      </div>
+      <div class="st-buttons">
+        <button class="st-btn st-btn-reset" id="btn-reset-sl">Reset SL</button>
+        <button class="st-btn st-btn-reset" id="btn-reset-target">Reset Target</button>
+        <button class="st-btn st-btn-reset" id="btn-reset-both">Reset Both</button>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-card-title">Actions</span>
+      </div>
+      <div class="action-buttons">
+        <button class="action-btn action-btn-exit" id="btn-exit-position" disabled>
+          ⚡ Exit Position
+        </button>
+      </div>
+      <div id="action-msg" class="msg" style="margin-top:8px"></div>
+    </div>
+
+    <!-- Today's PnL -->
+    <div class="term-card">
+      <div class="term-card-header">
+        <span class="term-card-title">Today's Summary</span>
+      </div>
+      <div class="today-grid">
+        <div class="td-row">
+          <span class="td-label">Trades</span>
+          <span class="td-val" id="td-trades">—</span>
+        </div>
+        <div class="td-row">
+          <span class="td-label">Wins</span>
+          <span class="td-val" id="td-wins">—</span>
+        </div>
+        <div class="td-row">
+          <span class="td-label">P&L</span>
+          <span class="td-val td-pnl" id="td-pnl">₹0.00</span>
+        </div>
+        <div class="td-row">
+          <span class="td-label">Win Rate</span>
+          <span class="td-val" id="td-wr">0%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM PANEL -->
+  <div class="terminal-bottom">
+    <div class="bottom-tabs">
+      <button class="bt-tab active" data-tab="trade-log">Trade Log</button>
+      <button class="bt-tab" data-tab="signal-history">Signal History</button>
+      <button class="bt-tab" data-tab="execution-events">Execution Events</button>
+    </div>
+    <div class="bottom-content">
+      <div class="bc-panel active" id="panel-trade-log">
+        <table class="bt-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Symbol</th>
+              <th>Side</th>
+              <th>Entry</th>
+              <th>Exit</th>
+              <th>P&L</th>
+              <th>Status</th>
+              <th>Strategy</th>
+            </tr>
+          </thead>
+          <tbody id="trade-log-body">
+            <tr><td colspan="8" class="muted center" style="padding:20px">No trades yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bc-panel" id="panel-signal-history">
+        <table class="bt-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Strategy</th>
+              <th>Signal</th>
+              <th>Symbol</th>
+              <th>Price</th>
+              <th>Confidence</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="signal-history-body">
+            <tr><td colspan="7" class="muted center" style="padding:20px">No signals yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bc-panel" id="panel-execution-events">
+        <div class="event-timeline" id="event-timeline">
+          <div class="muted center" style="padding:20px">No events yet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Confirmation Modal -->
+<div class="term-modal-overlay" id="confirm-modal" style="display:none">
+  <div class="term-modal">
+    <div class="term-modal-header">
+      <span class="term-modal-title" id="confirm-title">Confirm</span>
+    </div>
+    <div class="term-modal-body">
+      <p id="confirm-message">Are you sure?</p>
+    </div>
+    <div class="term-modal-actions">
+      <button class="modal-btn modal-btn-cancel" id="confirm-cancel">Cancel</button>
+      <button class="modal-btn modal-btn-confirm" id="confirm-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden state element for JS -->
+<input type="hidden" id="terminal-user-id" value="" />
+<input type="hidden" id="terminal-token" value="" />
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
+<script src="/static/js/terminal/state-manager.js"></script>
+<script src="/static/js/terminal/websocket-client.js"></script>
+<script src="/static/js/terminal/chart-manager.js"></script>
+<script src="/static/js/terminal/position-panel.js"></script>
+<script src="/static/js/terminal/bottom-panel.js"></script>
+<script>
+document.getElementById('terminal-loading').style.display = 'none';
+document.getElementById('terminal-app').style.display = '';
+</script>
+<script src="/static/js/terminal/terminal.js"></script>
+{% endblock %}
